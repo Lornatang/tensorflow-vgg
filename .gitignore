@@ -117,3 +117,7 @@ dmypy.json
 .idea/
 .vscode/
 data/
+.DS_Store
+create_tfrecords.py
+*.jpg
+*.tfrecord
