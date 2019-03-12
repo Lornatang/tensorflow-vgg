@@ -3,13 +3,17 @@ from vgg19 import *
 import tensorflow as tf
 
 batch_size = 64
-lr = 0.0001
-n_cls = 10
+lr = 1e-4
+classes = 10
 max_steps = 50000
 
 
 def read_and_decode(filename):
-    # 根据文件名生成一个队列
+    """
+
+    :param filename: tf records file name.
+    :return: image and labels.
+    """
     filename_queue = tf.train.string_input_producer([filename])
 
     reader = tf.TFRecordReader()
@@ -29,15 +33,14 @@ def read_and_decode(filename):
 
 
 def train():
-    x = tf.placeholder(dtype=tf.float32, shape=[None, 32, 32, 3], name='input')
-    y = tf.placeholder(dtype=tf.float32, shape=[None, n_cls], name='label')
+    X = tf.placeholder(dtype=tf.float32, shape=[None, 32, 32, 3], name='input')
+    y = tf.placeholder(dtype=tf.float32, shape=[None, classes], name='label')
     keep_prob = tf.placeholder(tf.float32)
-    output = vgg19(x, keep_prob, n_cls)
-    # probs = tf.nn.softmax(output)
+    output = vgg19(X, keep_prob, classes)
 
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=output, labels=y))
     # train_step = tf.train.AdamOptimizer(learning_rate=0.1).minimize(loss)
-    train_step = tf.train.GradientDescentOptimizer(learning_rate=lr).minimize(loss)
+    train_step = tf.train.AdamOptimizer(learning_rate=lr).minimize(loss)
 
     accuracy = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(output, 1), tf.argmax(y, 1)), tf.float32))
 
@@ -46,31 +49,24 @@ def train():
                                                     batch_size=batch_size,
                                                     capacity=200,
                                                     min_after_dequeue=100)
-    label_batch = tf.one_hot(label_batch, n_cls, 1, 0)
+    label_batch = tf.one_hot(label_batch, classes, 1, 0)
 
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
     with tf.Session() as sess:
         sess.run(init)
-        sess.run(tf.local_variables_initializer())
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess=sess, coord=coord)
         for i in range(max_steps):
             batch_x, batch_y = sess.run([img_batch, label_batch])
-            #            print batch_x, batch_x.shape
-            #            print batch_y
-            #            pdb.set_trace()
-            _, loss_val = sess.run([train_step, loss], feed_dict={x: batch_x, y: batch_y, keep_prob: 0.8})
+            _, loss_val = sess.run([train_step, loss], feed_dict={X: batch_x, y: batch_y, keep_prob: 0.8})
             if i % 10 == 0:
-                train_arr = accuracy.eval(feed_dict={x: batch_x, y: batch_y, keep_prob: 1.0})
+                train_arr = accuracy.eval(feed_dict={X: batch_x, y: batch_y, keep_prob: 1.0})
                 print("%s: Step [%d]  Loss : %f, training accuracy :  %g" % (datetime.now(), i, loss_val, train_arr))
-            # 只指定了训练结束后保存模型，可以修改为每迭代多少次后保存模型
             if (i + 1) == max_steps:
-                # checkpoint_path = os.path.join(FLAGS.train_dir, './model/model.ckpt')
                 saver.save(sess, './model/model.ckpt', global_step=i)
         coord.request_stop()
         coord.join(threads)
-        # saver.save(sess, 'model/model.ckpt')
 
 
 if __name__ == '__main__':
