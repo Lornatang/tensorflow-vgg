@@ -1,5 +1,6 @@
 from datetime import datetime
 from vgg19 import *
+import tensorflow as tf
 
 batch_size = 64
 lr = 0.0001
@@ -51,6 +52,7 @@ def train():
     saver = tf.train.Saver()
     with tf.Session() as sess:
         sess.run(init)
+        sess.run(tf.local_variables_initializer())
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess=sess, coord=coord)
         for i in range(max_steps):
