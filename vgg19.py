@@ -108,10 +108,10 @@ def vgg19(images, keep_prob, classes):
 
     flatten = tf.reshape(pool5, [-1, 4 * 4 * 512])
     fc6 = FullyConnected(flatten, 4096, name='fc6')
-    dropout1 = tf.nn.dropout(fc6, keep_prob)
+    dropout1 = tf.nn.dropout(fc6, rate=1 - keep_prob)
 
     fc7 = FullyConnected(dropout1, 4096, name='fc7')
-    dropout2 = tf.nn.dropout(fc7, keep_prob)
+    dropout2 = tf.nn.dropout(fc7, rate=1 - keep_prob)
 
     fc8 = FullyConnected(dropout2, classes, name='fc8')
 
