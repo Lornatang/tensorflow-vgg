@@ -1,6 +1,5 @@
 from datetime import datetime
 from vgg19 import *
-import tensorflow as tf
 
 batch_size = 64
 lr = 1e-4
